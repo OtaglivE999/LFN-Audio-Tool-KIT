@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import sounddevice as sd  # noqa: E402
+import soundfile as sf  # noqa: E402
 from scipy.signal import spectrogram, find_peaks  # noqa: E402
 
 # Try GPU acceleration
@@ -45,6 +46,7 @@ except ImportError:
 
 # Get script directory for reliable path resolution
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+RECORDINGS_DIR = os.path.join(SCRIPT_DIR, "recordings")
 
 SAMPLE_RATE = 44100  # Default sample rate used as a fallback
 DURATION_SEC = 5
@@ -52,9 +54,14 @@ LF_RANGE = (20, 100)
 HF_RANGE = (20000, 24000)
 DB_PATH = os.path.join(SCRIPT_DIR, "lfn_live_log.db")
 ALERT_LOG_PATH = os.path.join(SCRIPT_DIR, "alerts_log.json")
+MAX_RECORDING_SECONDS = 3600
 
 # Alert thresholds (dB SPL - Sound Pressure Level)
+codex/analyze-files-for-potential-updates
+# Defaults match README/CLI values for programmatic imports too
+
 # Defaults match documented values for library imports
+main
 LFN_ALERT_THRESHOLD = -20.0  # Default LFN alert threshold (20-100 Hz)
 HF_ALERT_THRESHOLD = -30.0   # Default ultrasonic alert threshold (20-24 kHz)
 
@@ -70,6 +77,12 @@ audio_queue = queue.Queue()
 alert_history = []
 use_gpu = False
 requested_sample_rate = None
+recording_enabled = False
+recording_buffer = []
+recording_start_time = None
+recording_sample_count = 0
+current_samplerate = None
+recording_lock = threading.Lock()
 
 
 def _safe_float(value):
@@ -185,11 +198,21 @@ def log_alert(alert_type, frequency, db_level, message):
     conn.close()
 
     # Also append to JSON log
+    def _to_native(value):
+        if value is None:
+            return None
+        if isinstance(value, np.generic):
+            return value.item()
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return value
+
     alert_data = {
         "timestamp": timestamp,
         "type": alert_type,
-        "frequency_hz": frequency,
-        "db_level": db_level,
+        "frequency_hz": _to_native(frequency),
+        "db_level": _to_native(db_level),
         "message": message
     }
     alert_history.append(alert_data)
@@ -202,6 +225,106 @@ def log_alert(alert_type, frequency, db_level, message):
         print(f"[WARN] Failed to save alert log: {e}")
 
     print(f"[ALERT] {message}")
+
+
+def start_recording():
+    """Begin capturing audio into an in-memory buffer."""
+    global recording_enabled, recording_buffer, recording_start_time, recording_sample_count
+    with recording_lock:
+        if recording_enabled:
+            print("[INFO] Recording already in progress.")
+            return
+        recording_enabled = True
+        recording_buffer = []
+        recording_sample_count = 0
+        recording_start_time = time.time()
+    try:
+        os.makedirs(RECORDINGS_DIR, exist_ok=True)
+    except OSError as e:
+        print(f"[WARN] Could not create recordings folder: {e}")
+    print("[REC] Recording started. Press 'r' again to stop and save.")
+
+
+def _finalize_recording(samplerate, auto_save=False):
+    """Write buffered audio to disk and reset state."""
+    global recording_buffer, recording_start_time, recording_sample_count
+    with recording_lock:
+        buffer_copy = list(recording_buffer)
+        recording_buffer = []
+        sample_count = recording_sample_count
+        recording_start_time = None
+        recording_sample_count = 0
+
+    if samplerate is None or samplerate <= 0:
+        print("[WARN] Recording stopped but sample rate is unknown.")
+        return None
+
+    if not buffer_copy:
+        print("[WARN] Recording stopped with no audio captured.")
+        return None
+
+    try:
+        audio_data = np.concatenate(buffer_copy, axis=0)
+    except ValueError as e:
+        print(f"[WARN] Unable to assemble recording buffer: {e}")
+        return None
+
+    duration_sec = audio_data.shape[0] / float(samplerate)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"recording_{timestamp}_{int(duration_sec)}s.wav"
+    output_path = os.path.join(RECORDINGS_DIR, filename)
+
+    try:
+        sf.write(output_path, audio_data, int(samplerate))
+        reason = "auto-saved" if auto_save else "saved"
+        print(
+            f"[REC] Recording {reason}: {output_path} "
+            f"({duration_sec:.1f}s, {sample_count} samples)"
+        )
+        return output_path
+    except (OSError, RuntimeError, ValueError) as e:
+        print(f"[ERROR] Failed to write recording: {e}")
+        return None
+
+
+def stop_recording(samplerate=None, auto_save=False):
+    """Stop capturing audio and persist the buffer to disk."""
+    global recording_enabled
+    if samplerate is None:
+        samplerate = current_samplerate
+
+    with recording_lock:
+        if not recording_enabled:
+            print("[INFO] No active recording to stop.")
+            return None
+        recording_enabled = False
+
+    return _finalize_recording(samplerate, auto_save=auto_save)
+
+
+def get_recording_status():
+    """Return current recording status and buffer details."""
+    with recording_lock:
+        active = recording_enabled
+        chunks = len(recording_buffer)
+        sample_count = recording_sample_count
+        start_time = recording_start_time
+
+    samplerate = current_samplerate or SAMPLE_RATE
+    duration_sec = (
+        sample_count / float(samplerate)
+        if samplerate and sample_count > 0
+        else 0.0
+    )
+    elapsed = time.time() - start_time if active and start_time else 0.0
+
+    return {
+        "active": active,
+        "duration_sec": duration_sec,
+        "buffer_chunks": chunks,
+        "samplerate": samplerate,
+        "elapsed": elapsed
+    }
 
 
 def compute_spectrogram_gpu(audio_data, sr):
@@ -691,6 +814,20 @@ def audio_callback(indata, _frames, _time_info, _status):
         # With dtype='float32' in InputStream, indata is already float32
         audio_queue.put(indata.copy())
 
+        if recording_enabled:
+            with recording_lock:
+                recording_buffer.append(indata.copy())
+                recording_sample_count += len(indata)
+
+                samples_limit = int((current_samplerate or SAMPLE_RATE) * MAX_RECORDING_SECONDS)
+                if samples_limit > 0 and recording_sample_count >= samples_limit:
+                    threading.Thread(
+                        target=stop_recording,
+                        args=(current_samplerate,),
+                        kwargs={"auto_save": True},
+                        daemon=True
+                    ).start()
+
 
 def _build_rate_candidates(device_info):
     rates = []
@@ -764,7 +901,7 @@ def _find_alternative_device(original_idx):
 
 def record_loop(device=None):
     """Main recording and analysis loop."""
-    global monitoring
+    global monitoring, current_samplerate
 
     try:
         device_info = sd.query_devices(device, 'input')
@@ -783,6 +920,7 @@ def record_loop(device=None):
         return
 
     stream, samplerate, attempts = _attempt_stream(device, channels)
+    current_samplerate = samplerate
 
     if stream is None:
         if attempts:
@@ -910,6 +1048,8 @@ def toggle_monitoring(device=None):
     else:
         monitoring = False
         print("[STOP] Monitoring stopped.")
+        if recording_enabled:
+            stop_recording(current_samplerate)
 
 
 def print_statistics():
@@ -949,6 +1089,15 @@ def print_statistics():
             print(f"LFN Average: {_fmt(lfn_avg)} dB | Max: {_fmt(lfn_max)} dB")
             print(f"Ultrasonic Average: {_fmt(hf_avg)} dB | "
                   f"Max: {_fmt(hf_max)} dB")
+
+    status = get_recording_status()
+    if status["active"]:
+        print(
+            f"Recording: ACTIVE ({status['duration_sec']:.1f}s, "
+            f"{status['buffer_chunks']} chunks)"
+        )
+    else:
+        print("Recording: Inactive")
     print(f"{'='*60}\n")
 
 
@@ -1091,7 +1240,9 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(SCRIPT_DIR, "spectrograms"), exist_ok=True)
         date_folder = datetime.now().strftime("%Y-%m-%d")
         os.makedirs(os.path.join(SCRIPT_DIR, "spectrograms", date_folder), exist_ok=True)
+        os.makedirs(RECORDINGS_DIR, exist_ok=True)
         print(f"[OK] Output directory verified: {os.path.join(SCRIPT_DIR, 'spectrograms', date_folder)}")
+        print(f"[OK] Recordings directory verified: {RECORDINGS_DIR}")
     except OSError as e:
         print(f"[WARN] Could not create output directories: {e}")
 
@@ -1182,6 +1333,8 @@ if __name__ == "__main__":
             monitoring = False
             print("\n[EXIT] Monitoring stopped by user.")
         finally:
+            if recording_enabled:
+                stop_recording(current_samplerate)
             print_statistics()
     else:
         # Interactive mode
@@ -1189,6 +1342,8 @@ if __name__ == "__main__":
         print("  ENTER - Start/Stop monitoring")
         print("  's' + ENTER - Show statistics")
         print("  'spec' + ENTER - Show spectrogram info")
+        print("  'r' + ENTER - Start/Stop recording (auto-starts monitoring if needed)")
+        print("  'rs' + ENTER - Show recording status")
         print("  'clean' + ENTER - Clean old spectrograms")
         print("  Ctrl+C - Exit\n")
 
@@ -1217,6 +1372,23 @@ if __name__ == "__main__":
                     print_statistics()
                 elif cmd.lower() == 'spec':
                     print_spectrogram_info()
+                elif cmd.lower() == 'r':
+                    if not monitoring:
+                        print("[AUTO] Monitoring is off. Starting monitoring so recording can capture audio...")
+                        toggle_monitoring(device=selected_device)
+                    if recording_enabled:
+                        stop_recording(current_samplerate)
+                    else:
+                        start_recording()
+                elif cmd.lower() == 'rs':
+                    status = get_recording_status()
+                    if status['active']:
+                        print(
+                            f"[REC] Active: {status['duration_sec']:.1f}s "
+                            f"buffered across {status['buffer_chunks']} chunks"
+                        )
+                    else:
+                        print("[REC] Recording is not active.")
                 elif cmd.lower() == 'clean':
                     clean_old_spectrograms()
                 else:
@@ -1228,5 +1400,7 @@ if __name__ == "__main__":
             monitoring = False
             print(f"\n[ERROR] Unexpected error: {e}")
         finally:
+            if recording_enabled:
+                stop_recording(current_samplerate)
             print_statistics()
 
