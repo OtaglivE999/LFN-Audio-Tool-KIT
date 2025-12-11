@@ -152,7 +152,7 @@ Interactive commands while running:
 | Command | Description |
 | --- | --- |
 | `ENTER` | Start/stop monitoring |
-| `r` + `ENTER` | Start/stop live recording (WAV saved to `src/recordings/`) |
+| `r` + `ENTER` | Start/stop live recording (auto-starts monitoring if needed; WAV saved to `src/recordings/`) |
 | `rs` + `ENTER` | Show current recording status |
 | `s` + `ENTER` | Show session statistics |
 | `spec` + `ENTER` | Show spectrogram information |

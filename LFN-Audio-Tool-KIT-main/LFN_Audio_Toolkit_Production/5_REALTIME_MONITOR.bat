@@ -18,14 +18,14 @@ if "%~1"=="" (
     echo Available options:
     echo   --gpu                  Enable GPU acceleration
     echo   --device N             Use specific audio device
-    echo   --lfn-threshold 45.0   LFN alert threshold (dB)
-    echo   --hf-threshold 50.0    Ultrasonic threshold (dB)
+    echo   --lfn-threshold -20.0  LFN alert threshold (dB)
+    echo   --hf-threshold -30.0   Ultrasonic threshold (dB)
     echo   --auto-start           Start monitoring automatically
     echo   --duration N           Auto-stop after N seconds
     echo.
     echo Live commands (during monitoring):
     echo   ENTER  Start/Stop monitoring
-    echo   r      Start/Stop recording (saves WAV to src\recordings)
+    echo   r      Start/Stop recording (auto-starts monitoring; saves WAV to src\recordings)
     echo   rs     Show recording status
     echo   s      Show statistics
     echo   spec   Show spectrogram info

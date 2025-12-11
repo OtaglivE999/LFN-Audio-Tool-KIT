@@ -1338,7 +1338,7 @@ if __name__ == "__main__":
         print("  ENTER - Start/Stop monitoring")
         print("  's' + ENTER - Show statistics")
         print("  'spec' + ENTER - Show spectrogram info")
-        print("  'r' + ENTER - Start/Stop recording")
+        print("  'r' + ENTER - Start/Stop recording (auto-starts monitoring if needed)")
         print("  'rs' + ENTER - Show recording status")
         print("  'clean' + ENTER - Clean old spectrograms")
         print("  Ctrl+C - Exit\n")
@@ -1369,6 +1369,9 @@ if __name__ == "__main__":
                 elif cmd.lower() == 'spec':
                     print_spectrogram_info()
                 elif cmd.lower() == 'r':
+                    if not monitoring:
+                        print("[AUTO] Monitoring is off. Starting monitoring so recording can capture audio...")
+                        toggle_monitoring(device=selected_device)
                     if recording_enabled:
                         stop_recording(current_samplerate)
                     else:
