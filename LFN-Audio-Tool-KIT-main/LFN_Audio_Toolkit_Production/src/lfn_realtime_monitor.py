@@ -57,7 +57,11 @@ ALERT_LOG_PATH = os.path.join(SCRIPT_DIR, "alerts_log.json")
 MAX_RECORDING_SECONDS = 3600
 
 # Alert thresholds (dB SPL - Sound Pressure Level)
+codex/analyze-files-for-potential-updates
 # Defaults match README/CLI values for programmatic imports too
+
+# Defaults match documented values for library imports
+main
 LFN_ALERT_THRESHOLD = -20.0  # Default LFN alert threshold (20-100 Hz)
 HF_ALERT_THRESHOLD = -30.0   # Default ultrasonic alert threshold (20-24 kHz)
 
