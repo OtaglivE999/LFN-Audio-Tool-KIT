@@ -54,9 +54,9 @@ DB_PATH = os.path.join(SCRIPT_DIR, "lfn_live_log.db")
 ALERT_LOG_PATH = os.path.join(SCRIPT_DIR, "alerts_log.json")
 
 # Alert thresholds (dB SPL - Sound Pressure Level)
-# Aligned with WHO Environmental Noise Guidelines 2018
-LFN_ALERT_THRESHOLD = 45.0  # WHO night limit for sleep protection
-HF_ALERT_THRESHOLD = 50.0   # Ultrasonic monitoring threshold
+# Defaults match documented values for library imports
+LFN_ALERT_THRESHOLD = -20.0  # Default LFN alert threshold (20-100 Hz)
+HF_ALERT_THRESHOLD = -30.0   # Default ultrasonic alert threshold (20-24 kHz)
 
 # Spectrogram configuration
 SPECTROGRAM_NPERSEG = 2048
