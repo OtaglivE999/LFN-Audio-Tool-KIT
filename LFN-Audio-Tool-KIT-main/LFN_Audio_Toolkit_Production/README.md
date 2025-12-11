@@ -138,7 +138,7 @@ python src/lfn_realtime_monitor.py
 With options:
 ```bash
 # Use specific audio device
-python src/lfn_realtime_monitor.py --device-id 1
+python src/lfn_realtime_monitor.py --device 1
 
 # Set custom duration (seconds)
 python src/lfn_realtime_monitor.py --duration 30
@@ -146,6 +146,17 @@ python src/lfn_realtime_monitor.py --duration 30
 # Enable GPU acceleration
 python src/lfn_realtime_monitor.py --gpu
 ```
+
+Interactive commands while running:
+
+| Command | Description |
+| --- | --- |
+| `ENTER` | Start/stop monitoring |
+| `r` + `ENTER` | Start/stop live recording (WAV saved to `src/recordings/`) |
+| `rs` + `ENTER` | Show current recording status |
+| `s` + `ENTER` | Show session statistics |
+| `spec` + `ENTER` | Show spectrogram information |
+| `clean` + `ENTER` | Remove spectrograms older than 7 days |
 
 #### Long Duration Recording
 Record audio for extended periods:
@@ -211,9 +222,12 @@ Options:
 ```
 Options:
   --gpu                  Enable GPU acceleration
-  --device-id ID         Audio input device ID
-  --duration SECS        Recording duration
-  --output-dir PATH      Custom output directory
+  --device ID            Audio input device ID
+  --lfn-threshold DB     LFN alert threshold (dB)
+  --hf-threshold DB     Ultrasonic alert threshold (dB)
+  --sample-rate HZ       Override audio sample rate
+  --auto-start           Start monitoring automatically
+  --duration SECS        Auto-stop after N seconds
 ```
 
 ### long_duration_recorder.py

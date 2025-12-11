@@ -23,6 +23,13 @@ if "%~1"=="" (
     echo   --auto-start           Start monitoring automatically
     echo   --duration N           Auto-stop after N seconds
     echo.
+    echo Live commands (during monitoring):
+    echo   ENTER  Start/Stop monitoring
+    echo   r      Start/Stop recording (saves WAV to src\recordings)
+    echo   rs     Show recording status
+    echo   s      Show statistics
+    echo   spec   Show spectrogram info
+    echo.
     echo Press ENTER to start with default settings...
     echo Or press Ctrl+C to cancel and add options
     echo.
@@ -43,6 +50,7 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo Check outputs:
     echo   - spectrograms\ folder for saved spectrograms
+    echo   - src\recordings\ folder for saved WAV recordings
     echo   - lfn_live_log.db for recorded data
     echo   - alerts_log.json for alert history
     echo.
