@@ -2,6 +2,8 @@
 
 This guide covers common issues and their solutions when using the LFN Audio Toolkit.
 
+> **💡 For comprehensive debugging strategies, advanced diagnostics, and understanding ambiguous behaviors, see the [Debugging Guide](DEBUGGING_GUIDE.md)**
+
 ## Table of Contents
 
 - [Installation Issues](#installation-issues)
@@ -621,31 +623,48 @@ pip install --no-cache-dir sounddevice
 
 If your problem isn't covered here:
 
-1. **Run the pre-flight check:**
+1. **Run debug utilities for comprehensive diagnostics:**
+```bash
+python debug_utils.py --check-all
+```
+
+2. **Run the pre-flight check:**
 ```bash
 python preflight_check.py
 ```
 
-2. **Run the test suite:**
+3. **Run the test suite:**
 ```bash
 python run_tests.py
 ```
 
-3. **Check logs:** Look for error messages and stack traces
-
-4. **Gather system information:**
+4. **Check logs:** Look for error messages and stack traces
 ```bash
-python --version
-pip list
-# GPU info (if applicable):
-nvidia-smi
+python debug_utils.py --analyze-logs
 ```
 
-5. **Create an issue on GitHub** with:
+5. **Gather system information:**
+```bash
+python debug_utils.py --system-report
+```
+
+6. **Enable debug logging:**
+```bash
+export LFN_DEBUG=1          # Linux/Mac
+set LFN_DEBUG=1             # Windows
+```
+
+7. **Consult the Debugging Guide:** See [DEBUGGING_GUIDE.md](DEBUGGING_GUIDE.md) for:
+   - Advanced debugging workflows
+   - Understanding ambiguous behaviors
+   - Performance debugging
+   - Interpreting error messages
+
+8. **Create an issue on GitHub** with:
    - Full error message and traceback
    - System information (OS, Python version)
    - Steps to reproduce
-   - Output of `preflight_check.py`
+   - Output of `debug_utils.py --check-all`
 
 ---
 
@@ -654,23 +673,23 @@ nvidia-smi
 Run these commands to diagnose common issues:
 
 ```bash
-# Check Python version
-python --version
+# Comprehensive diagnostics (recommended)
+python debug_utils.py --check-all
 
-# Check installed packages
-pip list
+# Individual checks
+python debug_utils.py --audio-devices    # Check audio devices
+python debug_utils.py --gpu-info         # Check GPU
+python debug_utils.py --test-ffmpeg      # Check FFmpeg
+python debug_utils.py --dependencies     # Check dependencies
+python debug_utils.py --analyze-logs     # Analyze log files
 
-# Check FFmpeg
-ffmpeg -version
-
-# Check audio devices
-python -c "import sounddevice as sd; print(sd.query_devices())"
-
-# Check GPU
-python -c "import cupy as cp; print(cp.cuda.runtime.runtimeGetVersion())"
-
-# Run full diagnostic
-python preflight_check.py
+# Or use individual commands:
+python --version                         # Check Python version
+pip list                                 # Check installed packages
+ffmpeg -version                          # Check FFmpeg
+python -c "import sounddevice as sd; print(sd.query_devices())"  # Audio devices
+python -c "import cupy as cp; print(cp.cuda.runtime.runtimeGetVersion())"  # GPU
+python preflight_check.py                # Run full diagnostic
 ```
 
 ---
@@ -714,5 +733,13 @@ python preflight_check.py
 
 ---
 
-**Last Updated:** December 10, 2025
+**Last Updated:** December 19, 2025  
 **Toolkit Version:** 2.0.0
+
+---
+
+## Additional Resources
+
+- **[Debugging Guide](DEBUGGING_GUIDE.md)** - Comprehensive debugging strategies and understanding toolkit behaviors
+- **[User Guide](docs/USER_GUIDE.md)** - Complete usage instructions
+- **[Contributing Guide](CONTRIBUTING.md)** - Guidelines for contributors
