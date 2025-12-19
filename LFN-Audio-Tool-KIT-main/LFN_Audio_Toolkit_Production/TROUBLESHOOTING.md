@@ -2,6 +2,8 @@
 
 This guide covers common issues and their solutions when using the LFN Audio Toolkit.
 
+> **Note**: This guide provides quick solutions for common symptoms. For in-depth debugging methodology and root cause analysis, see [DEBUGGING.md](DEBUGGING.md).
+
 ## Table of Contents
 
 - [Installation Issues](#installation-issues)
@@ -23,6 +25,9 @@ This guide covers common issues and their solutions when using the LFN Audio Too
 ```
 ERROR: Could not install packages due to an EnvironmentError: [Errno 13] Permission denied
 ```
+
+**Root Cause:**
+Python packages are trying to install into system directories (e.g., `/usr/local/lib/python3.x/`) where your user account lacks write permissions. This commonly occurs when Python was installed system-wide or when using a Python installation that was previously managed with sudo/administrator privileges.
 
 **Solutions:**
 
@@ -52,6 +57,9 @@ pip install -r requirements.txt
 pip install -r requirements.txt
 ```
 
+**Prevention:**
+Always use virtual environments (`python -m venv venv`) for project-specific dependencies. This isolates packages and prevents permission conflicts.
+
 ---
 
 ### Problem: `ModuleNotFoundError` after installation
@@ -60,6 +68,9 @@ pip install -r requirements.txt
 ```python
 ModuleNotFoundError: No module named 'soundfile'
 ```
+
+**Root Cause:**
+The Python interpreter running your script is different from the Python environment where packages were installed. This happens when you have multiple Python installations (system Python, Anaconda, virtual environments) and pip installs to one while your script runs with another.
 
 **Solutions:**
 
@@ -86,6 +97,11 @@ pip --version
 python -m pip install soundfile
 ```
 
+**Prevention:**
+- Use `python -m pip` instead of just `pip` to ensure packages install to the correct Python
+- Activate your virtual environment before installing packages
+- Use `which python` (Unix) or `where python` (Windows) to verify which Python is active
+
 ---
 
 ### Problem: `setup.py` fails during installation
@@ -94,6 +110,9 @@ python -m pip install soundfile
 ```
 error: Microsoft Visual C++ 14.0 or greater is required
 ```
+
+**Root Cause:**
+Some Python packages (like `soundfile` or `numpy` when building from source) require C/C++ compilation during installation. Windows doesn't include a C compiler by default, unlike Linux and macOS. The package is trying to compile native extensions but can't find the necessary build tools.
 
 **Solutions:**
 
@@ -106,6 +125,9 @@ error: Microsoft Visual C++ 14.0 or greater is required
 ```bash
 pip install --only-binary :all: -r requirements.txt
 ```
+
+**Prevention:**
+Install precompiled binary packages (wheels) when available to avoid compilation requirements.
 
 ---
 
@@ -142,6 +164,11 @@ print(sd.query_devices())
 python src/lfn_realtime_monitor.py --device 1
 ```
 
+**Prevention:**
+- Ensure microphone is connected before running the application
+- Grant microphone permissions when prompted by the OS
+- Test audio device with system utilities before using the toolkit
+
 ---
 
 ### Problem: Audio device access denied
@@ -151,6 +178,9 @@ python src/lfn_realtime_monitor.py --device 1
 PortAudioError: Device unavailable
 PermissionError: [Errno 13] Permission denied
 ```
+
+**Root Cause:**
+Modern operating systems require explicit user permission for applications to access microphones (privacy protection). The application hasn't been granted these permissions, or on Linux, the user account isn't in the `audio` group which controls audio device access.
 
 **Solutions:**
 
@@ -168,6 +198,9 @@ sudo usermod -a -G audio $USER
 # Log out and back in
 ```
 
+**Prevention:**
+Grant microphone permissions when first prompted by the OS. On Linux, ensure your user is in the audio group during initial setup.
+
 ---
 
 ### Problem: Audio buffer overflow warnings
@@ -177,12 +210,21 @@ sudo usermod -a -G audio $USER
 [WARN] Audio buffer overflow detected
 ```
 
+**Root Cause:**
+The system cannot process audio data fast enough to keep up with the incoming audio stream. Data is arriving faster than it can be consumed, causing the input buffer to fill up and overflow. This indicates insufficient CPU resources, inefficient processing algorithms, or conflicts with other applications using the audio subsystem.
+
 **Solutions:**
 
 1. **Increase buffer size:** Reduce sample rate or increase blocksize
 2. **Close other audio applications**
 3. **Check CPU usage** - ensure system isn't overloaded
 4. **Disable real-time effects** in audio drivers
+
+**Prevention:**
+- Monitor CPU usage before starting real-time analysis
+- Close unnecessary applications
+- Use GPU acceleration if available
+- Adjust buffer size based on your system's performance
 
 ---
 
@@ -195,6 +237,9 @@ sudo usermod -a -G audio $USER
 FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'
 ffmpeg conversion failed
 ```
+
+**Root Cause:**
+The FFmpeg executable is either not installed on the system, or it's installed but not in any directory listed in the system's PATH environment variable. When the toolkit tries to run `ffmpeg`, the operating system cannot locate the executable.
 
 **Solutions:**
 
@@ -231,6 +276,9 @@ ffmpeg -version
 command = ["C:\\path\\to\\ffmpeg.exe", "-y", "-i", input_path, ...]
 ```
 
+**Prevention:**
+Install FFmpeg and add it to PATH during initial setup. Verify with `ffmpeg -version` before running the toolkit.
+
 ---
 
 ### Problem: Audio conversion fails
@@ -239,6 +287,9 @@ command = ["C:\\path\\to\\ffmpeg.exe", "-y", "-i", input_path, ...]
 ```
 ❌ ffmpeg conversion failed: CalledProcessError
 ```
+
+**Root Cause:**
+The audio file may be corrupted, in an unsupported format, protected by DRM, or the FFmpeg installation may lack necessary codecs. FFmpeg might also fail if there are file path issues (spaces, special characters) or insufficient disk space for the output file.
 
 **Solutions:**
 
@@ -258,6 +309,12 @@ ffmpeg -i input.mp3 -ar 44100 -ac 1 output.wav
 
 4. **Use WAV files directly** to bypass conversion
 
+**Prevention:**
+- Test FFmpeg with sample files before processing important audio
+- Verify file integrity before conversion
+- Ensure adequate disk space
+- Avoid file paths with spaces or special characters
+
 ---
 
 ## GPU Acceleration Issues
@@ -268,6 +325,9 @@ ffmpeg -i input.mp3 -ar 44100 -ac 1 output.wav
 ```
 ERROR: Could not find a version that satisfies the requirement cupy-cuda11x
 ```
+
+**Root Cause:**
+There's a version mismatch between the installed CUDA toolkit/driver and the CuPy package you're trying to install. CuPy packages are built for specific CUDA versions (e.g., cupy-cuda11x for CUDA 11.x, cupy-cuda12x for CUDA 12.x), and you must install the matching version. Alternatively, you may not have an NVIDIA GPU or CUDA drivers installed at all.
 
 **Solutions:**
 
@@ -288,6 +348,9 @@ pip install cupy-cuda12x
 
 3. **If no NVIDIA GPU:** Skip GPU installation (toolkit works without it)
 
+**Prevention:**
+Check CUDA version with `nvidia-smi` before installing CuPy, and install the matching cupy-cudaXXx package.
+
 ---
 
 ### Problem: GPU falls back to CPU despite CuPy installed
@@ -297,6 +360,9 @@ pip install cupy-cuda12x
 ⚠️ GPU computation failed, falling back to CPU
 [CPU] Running on CPU
 ```
+
+**Root Cause:**
+While CuPy is installed, the GPU is unavailable for computation. Common causes include: GPU memory exhausted by other applications, CUDA driver version mismatch, GPU being used by another process, outdated NVIDIA drivers, or the CuPy installation not matching the installed CUDA runtime version.
 
 **Solutions:**
 
@@ -317,6 +383,12 @@ nvidia-smi
 4. **Update NVIDIA drivers:**
    - Download latest from: https://www.nvidia.com/drivers
 
+**Prevention:**
+- Monitor GPU memory usage before starting analysis
+- Ensure CuPy version matches CUDA version
+- Keep NVIDIA drivers up to date
+- Close GPU-intensive applications before running analysis
+
 ---
 
 ## Runtime Errors
@@ -327,6 +399,9 @@ nvidia-smi
 ```
 MemoryError: Unable to allocate array
 ```
+
+**Root Cause:**
+The application is trying to load an entire long audio file into RAM at once, which exceeds available system memory. Audio files grow linearly with duration (e.g., a 2-hour recording at 44.1kHz mono requires ~1.2GB). The system doesn't have enough contiguous free RAM to allocate this array, leading to MemoryError.
 
 **Solutions:**
 
@@ -350,6 +425,9 @@ import psutil
 print(f"Available RAM: {psutil.virtual_memory().available / 1024**3:.2f} GB")
 ```
 
+**Prevention:**
+Use the `long_duration_recorder.py` module for recordings longer than 30 minutes, which automatically segments recordings to prevent memory issues.
+
 ---
 
 ### Problem: Database locked errors
@@ -358,6 +436,9 @@ print(f"Available RAM: {psutil.virtual_memory().available / 1024**3:.2f} GB")
 ```
 sqlite3.OperationalError: database is locked
 ```
+
+**Root Cause:**
+SQLite databases allow only one write operation at a time. Another process or thread is currently holding a write lock on the database file. This commonly occurs when multiple instances of the real-time monitor are running simultaneously, or when the previous instance didn't shut down cleanly, leaving a stale lock.
 
 **Solutions:**
 
@@ -372,6 +453,9 @@ rm lfn_live_log.db-journal
 conn.execute("PRAGMA busy_timeout = 30000")  # 30 seconds
 ```
 
+**Prevention:**
+Only run one instance of the real-time monitor at a time. Ensure proper shutdown with Ctrl+C to release database locks cleanly.
+
 ---
 
 ### Problem: UTF-8 encoding errors on Windows
@@ -380,6 +464,9 @@ conn.execute("PRAGMA busy_timeout = 30000")  # 30 seconds
 ```
 UnicodeEncodeError: 'charmap' codec can't encode character
 ```
+
+**Root Cause:**
+Windows console (cmd.exe) defaults to legacy encodings like cp1252 or cp437 instead of UTF-8. When Python tries to print Unicode characters (emojis, special symbols) that don't exist in these legacy encodings, it fails. This is a Windows-specific issue due to backward compatibility with old console applications.
 
 **Solutions:**
 
@@ -392,6 +479,9 @@ set PYTHONIOENCODING=utf-8
 
 3. **Use Windows Terminal** instead of cmd.exe
 
+**Prevention:**
+Use Windows Terminal (available in Windows 10+) which defaults to UTF-8, or set PYTHONIOENCODING=utf-8 permanently in system environment variables.
+
 ---
 
 ## Performance Issues
@@ -402,6 +492,9 @@ set PYTHONIOENCODING=utf-8
 - Analysis takes >5 seconds per interval
 - Spectrograms delayed
 - Console output slow
+
+**Root Cause:**
+The system cannot process audio analysis fast enough in real-time. This is typically due to CPU-intensive spectrogram computation, insufficient CPU resources, or inefficient algorithms running on the CPU when GPU acceleration could provide 10x speedup. High spectrogram resolution also increases computation time quadratically.
 
 **Solutions:**
 
