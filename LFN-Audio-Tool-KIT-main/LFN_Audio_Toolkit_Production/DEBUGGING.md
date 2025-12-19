@@ -1126,5 +1126,5 @@ if filename == "problematic.wav":
 
 **Remember**: The goal is not just to make the error go away, but to **understand why it occurred** and **prevent it from happening again**. A proper fix addresses the fundamental issue, not just its visible symptoms.
 
-**Last Updated**: December 19, 2025  
+**Last Updated**: December 2025  
 **Version**: 1.0.0
