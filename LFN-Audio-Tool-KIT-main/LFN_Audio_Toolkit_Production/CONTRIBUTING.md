@@ -135,7 +135,29 @@ When adding new features:
 
 ## 🐛 Debugging
 
-### Useful Debug Commands
+**Important:** Always follow the debugging workflow to fix root causes, not just symptoms. See [DEBUGGING.md](DEBUGGING.md) for comprehensive guidance.
+
+### Key Debugging Principles
+
+1. **Fix Root Causes, Not Symptoms**
+   - Don't just make the error go away
+   - Understand why it happened
+   - Ensure it never happens again
+
+2. **Follow the Systematic Process**
+   - Reproduce reliably
+   - Form hypotheses
+   - Test methodically
+   - Document findings
+
+3. **Use the Right Tools**
+   - Python debugger (pdb)
+   - Memory profiling
+   - Performance profiling
+   - Logging and instrumentation
+
+### Quick Debug Commands
+
 ```bash
 # Check audio devices
 python -c "import sounddevice as sd; print(sd.query_devices())"
@@ -145,7 +167,23 @@ python -c "import cupy; print(cupy.cuda.runtime.runtimeGetVersion())"
 
 # Verify dependencies
 pip list | grep -E "soundfile|numpy|scipy|pandas"
+
+# Run diagnostic
+python preflight_check.py
 ```
+
+### Debugging Workflow
+
+When investigating an issue:
+
+1. **Reproduce** - Create minimal test case
+2. **Isolate** - Identify exact failure point
+3. **Analyze** - Use the 5 Whys technique
+4. **Fix** - Address root cause
+5. **Verify** - Test thoroughly
+6. **Document** - Update guides
+
+See [DEBUGGING.md](DEBUGGING.md) for detailed examples, tools, and techniques.
 
 ## 📋 Pull Request Checklist
 
