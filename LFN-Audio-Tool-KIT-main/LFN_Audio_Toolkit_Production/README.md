@@ -199,8 +199,9 @@ Modify settings in `config/settings.json` (create if needed):
 ## 📖 Documentation
 
 - [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
+- [Debugging Guide](DEBUGGING_GUIDE.md) - Comprehensive debugging and troubleshooting strategies
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
 - [API Reference](docs/API_REFERENCE.md) - Developer documentation
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
 - [FAQ](docs/FAQ.md) - Frequently asked questions
 
 ## 🔧 Command-Line Options
@@ -239,7 +240,9 @@ Options:
   --segment-duration MIN Segment duration in minutes
 ```
 
-## 🐛 Health Check
+## 🐛 Debugging & Diagnostics
+
+### Health Check
 
 Run system health assessment:
 ```bash
@@ -252,6 +255,36 @@ This checks:
 - GPU acceleration status
 - Disk space and permissions
 - Configuration validity
+
+### Debug Utilities
+
+For comprehensive diagnostics and troubleshooting:
+```bash
+# Run all diagnostic checks
+python debug_utils.py --check-all
+
+# Check specific components
+python debug_utils.py --audio-devices   # List audio devices
+python debug_utils.py --gpu-info        # GPU information
+python debug_utils.py --test-ffmpeg     # Test FFmpeg
+python debug_utils.py --analyze-logs    # Analyze log files
+python debug_utils.py --system-report   # Generate system report
+```
+
+### Enable Debug Mode
+
+Set environment variables for verbose debugging:
+```bash
+# Linux/Mac
+export LFN_DEBUG=1
+export LFN_LOG_LEVEL=DEBUG
+
+# Windows
+set LFN_DEBUG=1
+set LFN_LOG_LEVEL=DEBUG
+```
+
+For more information, see the [Debugging Guide](DEBUGGING_GUIDE.md).
 
 ## 🤝 Contributing
 
