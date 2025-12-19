@@ -200,7 +200,8 @@ Modify settings in `config/settings.json` (create if needed):
 
 - [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
 - [API Reference](docs/API_REFERENCE.md) - Developer documentation
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
+- [Debugging Guide](DEBUGGING.md) - Systematic debugging and root cause analysis
 - [FAQ](docs/FAQ.md) - Frequently asked questions
 
 ## 🔧 Command-Line Options

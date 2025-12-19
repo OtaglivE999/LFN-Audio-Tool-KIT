@@ -2,6 +2,8 @@
 
 This guide covers common issues and their solutions when using the LFN Audio Toolkit.
 
+> **💡 For systematic debugging and root cause analysis:** See [DEBUGGING.md](DEBUGGING.md) for comprehensive debugging methodologies, tools, and techniques for investigating unknown or complex issues.
+
 ## Table of Contents
 
 - [Installation Issues](#installation-issues)
@@ -641,11 +643,18 @@ pip list
 nvidia-smi
 ```
 
-5. **Create an issue on GitHub** with:
+5. **Follow systematic debugging:** See [DEBUGGING.md](DEBUGGING.md) for:
+   - Root cause analysis methodology
+   - Debugging tools and techniques
+   - How to resolve unknown issues
+   - Advanced debugging strategies
+
+6. **Create an issue on GitHub** with:
    - Full error message and traceback
    - System information (OS, Python version)
    - Steps to reproduce
    - Output of `preflight_check.py`
+   - What you've tried (from DEBUGGING.md)
 
 ---
 
@@ -714,5 +723,5 @@ python preflight_check.py
 
 ---
 
-**Last Updated:** December 10, 2025
+**Last Updated:** December 19, 2025
 **Toolkit Version:** 2.0.0
