@@ -98,9 +98,22 @@ def setup_logging(
     
     # Determine log directory
     if log_dir is None:
-        # Get script directory for consistent log location
-        script_dir = Path(__file__).parent.parent
-        log_dir = script_dir / DEFAULT_LOG_DIR
+        # Check environment variable first
+        env_log_dir = os.environ.get('LFN_LOG_DIR')
+        if env_log_dir:
+            log_dir = Path(env_log_dir)
+        else:
+            # Try to find project root (more robust than assuming parent.parent)
+            current = Path(__file__).resolve().parent
+            # Look for project markers
+            for _ in range(3):
+                if (current / 'preflight_check.py').exists() or (current / 'setup.py').exists():
+                    log_dir = current / DEFAULT_LOG_DIR
+                    break
+                current = current.parent
+            else:
+                # Fallback to parent directory
+                log_dir = Path(__file__).parent.parent / DEFAULT_LOG_DIR
     else:
         log_dir = Path(log_dir)
     

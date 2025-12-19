@@ -32,6 +32,28 @@ if sys.platform == 'win32':
         pass
 
 
+# Get project root directory (more robust approach)
+# Try to find the directory containing src/ and preflight_check.py
+def get_project_root():
+    """Find the project root directory"""
+    current = Path(__file__).resolve().parent
+    
+    # Look for markers that indicate project root
+    markers = ['preflight_check.py', 'setup.py', 'README.md']
+    
+    # Check current directory and up to 2 parents
+    for _ in range(3):
+        if any((current / marker).exists() for marker in markers):
+            return current
+        current = current.parent
+    
+    # Fallback to script directory
+    return Path(__file__).resolve().parent
+
+
+PROJECT_ROOT = get_project_root()
+
+
 # Color codes for terminal output
 class Colors:
     GREEN = '\033[92m'
@@ -222,7 +244,17 @@ def check_gpu():
     
     except ImportError:
         print_warning("CuPy not installed (GPU acceleration unavailable)")
-        print_info("Install with: pip install cupy-cuda11x (or cupy-cuda12x)")
+        print_info("For installation instructions, see: https://docs.cupy.dev/en/stable/install.html")
+        # Try to provide CUDA-specific hint if nvidia-smi works
+        try:
+            result = subprocess.run(
+                ['nvidia-smi', '--query-gpu=driver_version', '--format=csv,noheader'],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                print_info("Detected NVIDIA GPU - consider installing: pip install cupy-cuda11x or cupy-cuda12x")
+        except:
+            pass  # Silently ignore if nvidia-smi check fails
 
 
 def check_ffmpeg():
@@ -276,15 +308,13 @@ def check_filesystem():
     """Check filesystem, permissions, and disk space"""
     print_header("Filesystem & Permissions")
     
-    script_dir = Path(__file__).parent.parent
-    
     # Required directories
     dirs_to_check = [
-        ('Source Directory', script_dir / 'src'),
-        ('Output Directory', script_dir / 'outputs'),
-        ('Spectrograms', script_dir / 'spectrograms'),
-        ('Trends', script_dir / 'trends'),
-        ('Logs', script_dir / 'logs'),
+        ('Source Directory', PROJECT_ROOT / 'src'),
+        ('Output Directory', PROJECT_ROOT / 'outputs'),
+        ('Spectrograms', PROJECT_ROOT / 'spectrograms'),
+        ('Trends', PROJECT_ROOT / 'trends'),
+        ('Logs', PROJECT_ROOT / 'logs'),
     ]
     
     for name, path in dirs_to_check:
@@ -305,7 +335,7 @@ def check_filesystem():
     # Disk space
     try:
         import shutil
-        total, used, free = shutil.disk_usage(script_dir)
+        total, used, free = shutil.disk_usage(PROJECT_ROOT)
         
         total_gb = total / (1024**3)
         free_gb = free / (1024**3)
@@ -330,8 +360,7 @@ def analyze_logs():
     """Analyze recent log files for errors and warnings"""
     print_header("Log Analysis")
     
-    script_dir = Path(__file__).parent.parent
-    log_dir = script_dir / 'logs'
+    log_dir = PROJECT_ROOT / 'logs'
     
     if not log_dir.exists():
         print_warning("No logs directory found")
@@ -455,8 +484,7 @@ def generate_system_report():
         pass
     
     # Save report
-    script_dir = Path(__file__).parent.parent
-    report_path = script_dir / f"system_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_path = PROJECT_ROOT / f"system_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     
     try:
         with open(report_path, 'w', encoding='utf-8') as f:
