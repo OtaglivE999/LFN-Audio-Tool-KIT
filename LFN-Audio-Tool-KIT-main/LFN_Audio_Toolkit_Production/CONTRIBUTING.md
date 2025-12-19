@@ -135,6 +135,36 @@ When adding new features:
 
 ## 🐛 Debugging
 
+> **Important**: Always aim to fix the root cause, not just the symptom. See our comprehensive [DEBUGGING.md](DEBUGGING.md) guide for detailed methodology.
+
+### Debugging Workflow for Contributors
+
+When fixing bugs or investigating issues:
+
+1. **Reproduce the Issue**
+   - Create a minimal test case that consistently reproduces the problem
+   - Document exact steps, environment, and conditions
+
+2. **Identify Root Cause**
+   - Use the "Five Whys" technique to drill down to the fundamental issue
+   - Don't stop at the first error—ask why it occurred
+   - See [Root Cause vs Symptom Analysis](DEBUGGING.md#root-cause-vs-symptom-analysis)
+
+3. **Implement Proper Fix**
+   - Address the underlying problem, not just the visible symptom
+   - Consider edge cases and future implications
+   - Add defensive programming where appropriate
+
+4. **Validate Thoroughly**
+   - Test the fix with the original reproduction case
+   - Test edge cases and boundary conditions
+   - Ensure no regression in existing functionality
+
+5. **Add Prevention Measures**
+   - Add tests to prevent future regression
+   - Improve error messages if applicable
+   - Document the root cause for future reference
+
 ### Useful Debug Commands
 ```bash
 # Check audio devices
@@ -145,18 +175,68 @@ python -c "import cupy; print(cupy.cuda.runtime.runtimeGetVersion())"
 
 # Verify dependencies
 pip list | grep -E "soundfile|numpy|scipy|pandas"
+
+# Run preflight diagnostics
+python preflight_check.py
+
+# Run health assessment
+python src/lfn_health_assessment.py
 ```
+
+### Debugging Best Practices
+
+**DO:**
+- ✅ Use logging instead of print statements for debugging
+- ✅ Write tests that reproduce the bug
+- ✅ Document the root cause in commit messages
+- ✅ Fix related issues while you're in the code
+- ✅ Add clear error messages that guide users to solutions
+
+**DON'T:**
+- ❌ Apply quick fixes without understanding the root cause
+- ❌ Use broad try-except blocks that hide real issues
+- ❌ Leave debugging code in production
+- ❌ Ignore edge cases "that probably won't happen"
+- ❌ Add arbitrary waits/sleeps to "fix" timing issues
+
+### Example: Good vs Bad Fix
+
+**Bad (Symptom Fix):**
+```python
+# Just catches the error without fixing the underlying issue
+try:
+    data = load_entire_file(large_file)
+except MemoryError:
+    print("File too large")
+    return None  # User still can't process their file!
+```
+
+**Good (Root Cause Fix):**
+```python
+# Addresses the fundamental limitation
+def load_file_in_chunks(file_path, chunk_size_mb=100):
+    """
+    Load large files in chunks to avoid memory errors.
+    Root cause: Loading entire file exceeds available RAM.
+    """
+    # Implementation that streams data in manageable chunks
+    pass
+```
+
+For comprehensive debugging methodology, see [DEBUGGING.md](DEBUGGING.md).
 
 ## 📋 Pull Request Checklist
 
 Before submitting:
 - [ ] Code follows style guidelines
+- [ ] **Root cause addressed** (not just symptom fixed)
 - [ ] Added/updated documentation
 - [ ] Added/updated tests
 - [ ] Tested on multiple scenarios
 - [ ] No breaking changes (or documented)
-- [ ] Commit messages are clear
+- [ ] Commit messages are clear and explain the "why"
 - [ ] Branch is up to date with main
+- [ ] Reviewed [DEBUGGING.md](DEBUGGING.md) for best practices
 
 ## 🏆 Recognition
 

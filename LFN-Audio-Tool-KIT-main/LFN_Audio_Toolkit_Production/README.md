@@ -199,9 +199,10 @@ Modify settings in `config/settings.json` (create if needed):
 ## 📖 Documentation
 
 - [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
-- [API Reference](docs/API_REFERENCE.md) - Developer documentation
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
-- [FAQ](docs/FAQ.md) - Frequently asked questions
+- [Troubleshooting](TROUBLESHOOTING.md) - Quick fixes for common issues
+- [Debugging Guide](DEBUGGING.md) - Root cause analysis and systematic debugging
+- [Contributing](CONTRIBUTING.md) - Development and contribution guidelines
+- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Deployment procedures
 
 ## 🔧 Command-Line Options
 
@@ -239,7 +240,9 @@ Options:
   --segment-duration MIN Segment duration in minutes
 ```
 
-## 🐛 Health Check
+## 🐛 Troubleshooting & Debugging
+
+### Quick Diagnostics
 
 Run system health assessment:
 ```bash
@@ -253,9 +256,21 @@ This checks:
 - Disk space and permissions
 - Configuration validity
 
+### Getting Help
+
+Having issues? We have comprehensive guides:
+
+1. **Quick Fixes**: Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues and solutions
+2. **Deep Dive**: See [DEBUGGING.md](DEBUGGING.md) for systematic debugging methodology
+3. **Community**: Open an issue on [GitHub Issues](https://github.com/yourusername/lfn-audio-toolkit/issues)
+
+**Remember**: Always aim to fix the root cause, not just the symptom. Our debugging guide helps you identify and resolve fundamental issues.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+**Key Principle**: Fix root causes, not symptoms. See our [Debugging Guide](DEBUGGING.md) for methodology.
 
 ## 📝 License
 

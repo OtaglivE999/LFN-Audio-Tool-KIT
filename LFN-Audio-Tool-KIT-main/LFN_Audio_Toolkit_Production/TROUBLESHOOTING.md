@@ -519,6 +519,9 @@ DURATION_SEC = 10  # Was 5
 
 5. **Close resource-heavy applications**
 
+**Prevention:**
+Enable GPU acceleration if available, adjust analysis parameters based on system capabilities, and monitor resource usage during real-time analysis.
+
 ---
 
 ### Problem: Batch processing is very slow
@@ -526,6 +529,9 @@ DURATION_SEC = 10  # Was 5
 **Symptoms:**
 - Processing 100 files takes hours
 - High CPU/memory usage
+
+**Root Cause:**
+Batch processing involves repetitive FFT computations for spectrograms, which are CPU-intensive. Without GPU acceleration, each file's analysis can take 10-100x longer. Additional overhead comes from trend plot generation, high-resolution spectrograms, and processing entire large files in memory at once.
 
 **Solutions:**
 
@@ -546,6 +552,9 @@ python src/lfn_batch_file_analyzer.py "path" --no-trends
 
 4. **Process in smaller batches**
 
+**Prevention:**
+Always enable GPU acceleration for batch processing if available. Use block processing for large files and disable non-essential features like trend plots during initial analysis.
+
 ---
 
 ## Output File Issues
@@ -555,6 +564,9 @@ python src/lfn_batch_file_analyzer.py "path" --no-trends
 **Symptoms:**
 - No PNG files in `spectrograms/` folder
 - "Spectrogram: None" in results
+
+**Root Cause:**
+Matplotlib cannot write spectrogram images to disk. Common causes include: insufficient write permissions on the output directory, the directory doesn't exist, insufficient disk space, or matplotlib is configured with an incompatible backend (e.g., interactive backend in headless environment).
 
 **Solutions:**
 
@@ -584,6 +596,9 @@ print(matplotlib.get_backend())
 # Should be 'Agg' for non-interactive
 ```
 
+**Prevention:**
+Ensure output directories exist with proper permissions before running analysis. Monitor disk space regularly.
+
 ---
 
 ### Problem: Excel export fails
@@ -592,6 +607,9 @@ print(matplotlib.get_backend())
 ```
 ⚠️ Excel export failed: ...
 ```
+
+**Root Cause:**
+The Excel file cannot be written. Common causes: openpyxl library not installed, Excel file is currently open (locked by Excel), insufficient write permissions, disk full, or the file path contains invalid characters.
 
 **Solutions:**
 
@@ -609,6 +627,9 @@ pip install --upgrade openpyxl
 python src/lfn_batch_file_analyzer.py "path" --export-formats csv
 ```
 
+**Prevention:**
+Close Excel files before re-running analysis. Verify openpyxl is installed during setup.
+
 ---
 
 ### Problem: Output files have incorrect paths on Windows
@@ -617,6 +638,9 @@ python src/lfn_batch_file_analyzer.py "path" --export-formats csv
 ```
 FileNotFoundError: [WinError 3] The system cannot find the path specified
 ```
+
+**Root Cause:**
+Windows has path-related limitations: 260-character maximum path length (legacy limit), backslashes in path strings requiring escaping, case-insensitive but case-preserving filesystem, and special handling needed for network paths (UNC). These issues don't occur on Unix-like systems.
 
 **Solutions:**
 
@@ -637,11 +661,17 @@ from pathlib import Path
 path = Path("C:/Users/Name/Desktop/audio")
 ```
 
+**Prevention:**
+Always use `pathlib.Path` or forward slashes in path strings for cross-platform compatibility. Keep project paths short on Windows.
+
 ---
 
 ## Platform-Specific Issues
 
 ### Windows: "Python not recognized" error
+
+**Root Cause:**
+The Python installation directory is not in the Windows PATH environment variable. When you type `python` in the command prompt, Windows searches directories listed in PATH. If Python's directory isn't there, Windows cannot find the executable.
 
 **Solutions:**
 
@@ -659,9 +689,15 @@ py script.py  # Instead of python script.py
 C:\Python39\python.exe script.py
 ```
 
+**Prevention:**
+During Python installation, check "Add Python to PATH". For existing installations, add Python directory to PATH manually.
+
 ---
 
 ### macOS: "command not found: python"
+
+**Root Cause:**
+macOS ships with Python 2.7 as `python` (deprecated), but modern Python 3.x is typically installed as `python3`. When you type `python`, macOS looks for the Python 2.7 binary which may not be available on newer macOS versions.
 
 **Solutions:**
 
@@ -678,6 +714,9 @@ source ~/.zshrc
 
 3. **Install Python from python.org** (not just Xcode tools)
 
+**Prevention:**
+On macOS, always use `python3` command instead of `python`, or create a shell alias for convenience.
+
 ---
 
 ### Linux: PortAudio errors
@@ -687,6 +726,9 @@ source ~/.zshrc
 OSError: PortAudio library not found
 ImportError: libportaudio.so.2: cannot open shared object file
 ```
+
+**Root Cause:**
+The sounddevice Python package requires the PortAudio C library to interface with audio hardware. On Linux, system libraries are not bundled with Python packages—they must be installed separately via the system package manager. The Python package can install, but it cannot function without the underlying C library.
 
 **Solutions:**
 
@@ -707,6 +749,9 @@ sudo pacman -S portaudio
 pip uninstall sounddevice
 pip install --no-cache-dir sounddevice
 ```
+
+**Prevention:**
+On Linux, install system audio libraries (portaudio19-dev) before installing Python audio packages.
 
 ---
 
