@@ -28,7 +28,8 @@ if sys.platform == 'win32':
         import codecs
         sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
         sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
-    except:
+    except (AttributeError, UnicodeError, TypeError):
+        # Silently continue if encoding setup fails
         pass
 
 
@@ -253,8 +254,9 @@ def check_gpu():
             )
             if result.returncode == 0:
                 print_info("Detected NVIDIA GPU - consider installing: pip install cupy-cuda11x or cupy-cuda12x")
-        except:
-            pass  # Silently ignore if nvidia-smi check fails
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+            # Silently ignore if nvidia-smi check fails
+            pass
 
 
 def check_ffmpeg():
