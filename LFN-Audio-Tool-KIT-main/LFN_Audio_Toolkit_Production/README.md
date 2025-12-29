@@ -199,9 +199,9 @@ Modify settings in `config/settings.json` (create if needed):
 ## 📖 Documentation
 
 - [User Guide](docs/USER_GUIDE.md) - Detailed usage instructions
-- [API Reference](docs/API_REFERENCE.md) - Developer documentation
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
-- [FAQ](docs/FAQ.md) - Frequently asked questions
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
+- [Quick Start](QUICKSTART.md) - Getting started guide
+- [Contributing](CONTRIBUTING.md) - How to contribute
 
 ## 🔧 Command-Line Options
 
