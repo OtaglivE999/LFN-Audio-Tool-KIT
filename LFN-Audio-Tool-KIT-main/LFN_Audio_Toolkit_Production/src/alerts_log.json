@@ -1,7 +1,0 @@
-{
-  "alerts": [
-    {
-      "timestamp": "2025-12-10T18:26:41.302263",
-      "type": "LFN",
-      "frequency_hz": 64.599609375,
-      "db_level": 
